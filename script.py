@@ -1,19 +1,8 @@
 from gsheet import GoogleSheets as gs
 from dataProcess import dataProcess as dp
-
+import json
 def main():
-  service_account_info = {
-    "type": "service_account",
-    "project_id": "combine-report",
-    "private_key_id": "4d2d7a7a0959ba9aec04827060e15bce2f3552b9",
-    "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDTyzizDcbVQXFj\nxxCcjoFEQqk5pbLNhwZ9/sNTecQwUv46R2tVZ9WtrtXivCmVx4uWKw/AeLMcdWtN\nVwMAmfIVPWM9hYKcocHHr05TmD80+YFGuxRZYyD8KcuGoAYBb7mM+3Fyu3YvIh3I\nLM45D7v+7CfRV1oOt6n7n+idkjJy5uT6jGRvBnDojjObGV6LwLqZTQLgALrU/SLf\nzRWXxkOU3qMvQKbU39+nQnhbAm2wL6be6MmQ7bSkSMIyIoX2SMFvxiH/AXsJcsGP\noypLhSc1UuOEcM7vBfcArjvMC7iCUlGVo+MQo19aMcqy5VV0fYKY2RYjtU9HAP8a\n+AXqE4UVAgMBAAECggEAFX7VMNsPmJpNQ1azWWhfN0naugaWuKRhJM2EDodXwZ3S\nvqB8BM2GktuhSqNVRyXbBXE2Zo75gsRqEQ3pOJjnSH+UAGz5/iKus7EXroVPuPUv\nyTl4jb/xW5Z0WSQJqACqYOQuNfpPuuXoBuaBQapWpr9aJTWL5t1+K5MlvURWyXF1\nX8Thd5iJRpLew+ixuHMtqIZcD9LPV9D+gmGBa37xT4EhB24XXlNiW14RyHFAd6WT\nS/4kvlyQYrq/fY4306rgN3A3xDoj4//R13StTGJnWDdp5MBbvU/pIeWMfeQRHOdn\nzLt0hnpj6N3q/YkNIjQ/yOuw85amaMahKtd0SNMy2wKBgQD5lt7SdAzLtMVdFHgg\nahKehMtQEgu42brKIQ0axnVO76M2bbetNmrMn8ErryCWL30R56QnjNKKSbedS7y3\nF9oBGW/zZ5a7rCZCdcmO8RHHey8PzfKX6QFtBJO2G3cluuObsi4BLONSQT5AvDZO\nPWvDvLCYSwnT0MRnbyaxNNm3+wKBgQDZO9VlUQOUfpRY311Oox4foePWoR+95GJz\nteDCc9q/oYBMCg9rfNQmnBu+iVGrvwu4pCgQ5gQo3FeFEZeJ3XZvHc0K/hr6PrtJ\n/y1sR9p5Kaq9rCFTWAJ7Z8jp5Pqajf0z7hK/bTY2WKK4dVg7c7/dGswvIOg3OezZ\nMoT8aB3aLwKBgBVYjuQG4tVFN5/3UTLMf50pFE5bzL7ZeD0zSHCiyoOewSG1joD0\n53tqqlW3G51coGC4o/Rx+cuz9E0yngg2tQFlEIsLr/uLBJaohj2AZpnd8i9y2K2f\nUuzk+FEZ1j3W1wKI4aBeG278f3t/3VEhtaa+64eK22NPNoz2F6QONhSjAoGBAKnt\nPPsZCUTiUybF6tY1kL3LxE7DEPJYsY6z6hIR0D5wlcxlXjSFm+pr2OQNxJ4lPoT7\nm//D/eL8oVWNMk38t8UpuZfst6ui4Jx8iMqX1lVK+62M9TCduqtPvwD/Re0aPsOd\nanrlci/G29qQqCkxXRcW/DutcRiqLhSkiRRsWVWvAoGBAKftIPZJSKBPqMWV3fJA\nd5MCCZWQB34GkaUSkQIZ+IBtMJ3PjJ/8bWQOrZ8yrWyW5wzo2bfVGtD/9iB1RypB\n6w+ntBH/UV2COhyBQLrrDgIGqTcfXoJfdnqTKhYSSLY2SWvkv0m59y1xXmd6/XLp\nAOQPpwrco99p4o+E2vz5bqWQ\n-----END PRIVATE KEY-----\n",
-    "client_email": "pmi-em-mel-central@combine-report.iam.gserviceaccount.com",
-    "client_id": "117235204728811468597",
-    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-    "token_uri": "https://oauth2.googleapis.com/token",
-    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/pmi-em-mel-central%40combine-report.iam.gserviceaccount.com",
-  }
+  service_account_info = json.loads(os.environ['SERVICE_ACCOUNT_INFO'])
 
   # Getting the sheet IDs of report files
   getSheetIdService = gs(service_account_info, '16ru3j-n3b0mpdqSUL2586v-p0_N_P4nFFZJgkHMnTuw')
