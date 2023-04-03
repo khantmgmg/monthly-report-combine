@@ -4,7 +4,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
 scheduler = BackgroundScheduler(daemon=True)
-scheduler.add_job(func=script.main, trigger='interval', hours=1)
+scheduler.add_job(func=script.main, trigger='interval', minutes=10)
 scheduler.start()
 
 @app.route('/')
