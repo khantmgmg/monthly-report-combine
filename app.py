@@ -1,11 +1,14 @@
 from flask import Flask
 import script
+from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
+scheduler = BackgroundScheduler(daemon=True)
+scheduler.add_job(func=script.main, trigger='interval', hours=1)
+scheduler.start()
 
 @app.route('/')
 def hello():
-    script.main()
     return 'Hello, World!'
 
 if __name__ == '__main__':
