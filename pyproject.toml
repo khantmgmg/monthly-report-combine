@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "repl_nix_monthly-report-combine"
+version = "0.1.0"
+description = ""
+authors = ["Replit user <<>>"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+numpy = "^1.24.2"
+pandas = "^2.0.0"
+xds-protos = "^0.0.11"
+APScheduler = "^3.10.1"
+Flask = "^2.2.3"
+google-api-python-client = "2.83.0"
+google-auth = "2.17.1"
+google-auth-oauthlib = "1.0.0"
+google-auth-httplib2 = "0.1.0"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

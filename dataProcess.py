@@ -216,6 +216,7 @@ class dataProcess:
                            'Response to Case ID','Type of Provider']]
     responseCaseIdDf = responseCaseIdDf.query("`Response to Case ID` != ''")
     responseCaseIdDf = responseCaseIdDf.drop_duplicates()
+    responseCaseIdDf = responseCaseIdDf.fillna('')
     responseCaseIdDf['# of index cases responded'] = [len([x for x in re.split(',|/', i) if x]) for i in responseCaseIdDf['Response to Case ID']]
     responseCaseIdDf['Quarter of fiscal year'] = df.apply(lambda x: get_fiscal_quarter(x['Reporting Month'], x['Reporting Year']), axis=1)
     responseCaseIdDf = responseCaseIdDf.reindex(columns=['Organization', 'State Region', 'Township OD', 'Reporting Month', \

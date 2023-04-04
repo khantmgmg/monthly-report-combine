@@ -1,9 +1,32 @@
 from gsheet import GoogleSheets as gs
 from dataProcess import dataProcess as dp
 import json
-def main():
-  service_account_info = json.loads(os.environ['SERVICE_ACCOUNT_INFO'])
+import os
+import pandas as pd
 
+
+
+def main():
+  print("Function call received")
+  
+  dir = 'data/'
+  dataDir = os.listdir(dir)
+  for file in dataDir:
+    filePath = os.path.join(dir, file)
+    os.remove(filePath)
+    
+  service_account_info = {
+  "type": os.environ['type'],
+  "project_id": os.environ['project_id'],
+  "private_key_id": os.environ['private_key_id'],
+  "private_key": os.environ['private_key'],
+  "client_email": os.environ['client_email'],
+  "client_id": os.environ['client_id'],
+  "auth_uri": os.environ['auth_uri'],
+  "token_uri": os.environ['token_uri'],
+  "auth_provider_x509_cert_url": os.environ['auth_provider_x509_cert_url'],
+  "client_x509_cert_url": os.environ['client_x509_cert_url'],
+}
   # Getting the sheet IDs of report files
   getSheetIdService = gs(service_account_info, '16ru3j-n3b0mpdqSUL2586v-p0_N_P4nFFZJgkHMnTuw')
   getSheetId = getSheetIdService.read_range('LF!A1:B')
@@ -12,7 +35,7 @@ def main():
     link = fileData['File URL']
     link = link.split("/")[5]
     sheetIds.append(link)
-  print(sheetIds)
+  # print(sheetIds)
 
   # Defining ranges of report file
   ranges = [
@@ -44,9 +67,9 @@ def main():
         "Waste disposal!A2:V",
         "Patient record!A1:AZ"
     ]
-
+  
   # Get data from all report files and save it in data.
-  data = {}
+  # data = {}
   for sheetId in sheetIds:
     print(f"reading data from {sheetId}")
     service = gs(service_account_info, sheetId)
@@ -56,23 +79,106 @@ def main():
       modSheetName = modSheetName.replace(" ","_")
       modSheetName = modSheetName.replace(",","_")
       # print(f"{sheetName} : {modSheetName}")
-      if not modSheetName in data:
-        data[modSheetName] = []
-      data[modSheetName] += sheetsData[sheetName]['listOfDict']
+      df = pd.DataFrame(sheetsData[sheetName]['listOfDict'])
+      filePath = f"data/{modSheetName}.csv"
+      with open(filePath,'a') as f:
+        df.to_csv(f, header=f.tell()==0, index=False)
 
-  data['All_provider'] = dp.restructure_all_provider(data['All_villages'],data['All_provider'])
-  data['IPC_additional_and_PR_IPC'] = dp.total_ipc(data['IPC_additional'], data['Patient_record'])
-  data['Meeting_supervision_stockout'] = dp.prepare_mss(data['Meeting_supervision_stockout'])
-  data['Patient_record'] = dp.prepare_patient_record(data['Patient_record'])
+  # Restructuring all_provider data
+  print("Preparing all_provider data")
+  csvAllVillages = pd.read_csv('data/All_villages.csv')
+  csvAllVillages = csvAllVillages.to_dict(orient='records')
+  csvAllProvider = pd.read_csv('data/All_provider.csv')
+  csvAllProvider = csvAllProvider.to_dict(orient='records')
+  # print(csvAllVillages)
+  csvAllProvider = dp.restructure_all_provider(csvAllVillages, csvAllProvider)
+  csvAllProvider = pd.DataFrame(csvAllProvider)
+  # print(csvAllProvider)
+  os.remove('data/All_provider.csv')
+  with open('data/All_provider.csv','a') as f:
+    csvAllProvider.to_csv(f, header=f.tell()==0, index=False)
+    
+  # Prepare patient record
+  # Define the chunk size
+  chunk_size = 100000
+  
+  # Open the large file in chunks
+  for chunk in pd.read_csv('data/Patient_record.csv', chunksize=chunk_size, dtype={'Year in Carbonless':str, 'Reporting Year':str}):
+  
+    # Clean up the data
+    chunk['Year in Carbonless'] = chunk['Year in Carbonless'].astype(str).str.replace(',', '')
+    chunk['Reporting Year'] = chunk['Reporting Year'].astype(str).str.replace(',', '')
+    chunk['Year in Carbonless'] = pd.to_numeric(chunk['Year in Carbonless'], errors='coerce').fillna(0).astype(int)
+    chunk['Reporting Year'] = pd.to_numeric(chunk['Reporting Year'], errors='coerce').fillna(0).astype(int)
+  
+    # Convert to dictionary and prepare the data
+    chunk = chunk.to_dict(orient='records')
+    chunk = dp.prepare_patient_record(chunk)
+    chunk = pd.DataFrame(chunk)
+  
+    # Append to the new file
+    with open('data/Patient_record_new.csv', 'a') as f:
+      chunk.to_csv(f, header=f.tell()==0, index=False)
+  
+  # Remove the original file
+  os.remove('data/Patient_record.csv')
+  # rename the new file to the original filename
+  os.rename('data/Patient_record_new.csv', 'data/Patient_record.csv')
 
-  data['CaseMx'] = dp.casemx_by_rpMth_PvNpv(data['Patient_record'])
-  data['RPP_calc'] = dp.rpp_calc(data['Patient_record'])
-  data['Responded cases'] = dp.responded_cases(data['Patient_record'])
-  data['CaseMx (RpMth)'] = dp.casemx_by_rpMth(data['Patient_record'])
-  data['Positive_Only'] = dp.positive_only(data['Patient_record'])
+    
+  
+  
+  # Preparing total IPC data from IPC_additional and Patient_record
+  csvIpcAdditional = pd.read_csv('data/IPC_additional.csv')
+  csvIpcAdditional = csvIpcAdditional.to_dict(orient='records')
+  csvPR = pd.read_csv('data/Patient_record.csv')
+  csvPR = csvPR.to_dict(orient='records')
+  csvIpcAdditionalAndPrIPc = dp.total_ipc(csvIpcAdditional, csvPR)
+  csvIpcAdditionalAndPrIPc = pd.DataFrame(csvIpcAdditionalAndPrIPc)
+  with open('data/IPC_additional_and_PR_IPC.csv', 'a') as f:
+    csvIpcAdditionalAndPrIPc.to_csv(f, header=f.tell()==0, index=False)
 
-  del data['IPC_additional']
-  del data['Patient_record']
+  # Preparing Meeting,Supervision,Stockout
+  csvMss = pd.read_csv('data/Meeting_supervision_stockout.csv')
+  csvMss = csvMss.to_dict(orient='records')
+  csvMss = dp.prepare_mss(csvMss)
+  csvMss = pd.DataFrame(csvMss)
+  os.remove('data/Meeting_supervision_stockout.csv')
+  with open('data/Meeting_supervision_stockout.csv', 'a') as f:
+    csvMss.to_csv(f, header=f.tell()==0, index=False)
+
+  csvPrOrig = pd.read_csv('data/Patient_record.csv')
+  csvPrOrig = csvPrOrig.to_dict(orient='records')
+  
+  csvCaseMx = dp.casemx_by_rpMth_PvNpv(csvPrOrig)
+  csvCaseMx = pd.DataFrame(csvCaseMx)
+  with open('data/CaseMx.csv', 'a') as f:
+    csvCaseMx.to_csv(f, header=f.tell()==0, index=False)
+
+  
+  csvRppCalc = dp.rpp_calc(csvPrOrig)
+  csvRppCalc = pd.DataFrame(csvRppCalc)
+  with open('data/RPP_calc.csv', 'a') as f:
+    csvRppCalc.to_csv(f, header=f.tell()==0, index=False)
+    
+  # print(csvPrOrig[:10])
+  csvRespondedCases = dp.responded_cases(csvPrOrig)
+  csvRespondedCases = pd.DataFrame(csvRespondedCases)
+  with open('data/Responded cases.csv', 'a') as f:
+    csvRespondedCases.to_csv(f, header=f.tell()==0, index=False)
+
+  csvCaseMxRpMth = dp.casemx_by_rpMth(csvPrOrig)
+  csvCaseMxRpMth = pd.DataFrame(csvCaseMxRpMth)
+  with open('data/CaseMx (RpMth).csv', 'a') as f:
+    csvCaseMxRpMth.to_csv(f, header=f.tell()==0, index=False)
+
+  csvPosOnly = dp.positive_only(csvPrOrig)
+  csvPosOnly = pd.DataFrame(csvPosOnly)
+  with open('data/Positive_Only.csv', 'a') as f:
+    csvPosOnly.to_csv(f, header=f.tell()==0, index=False)
+
+  os.remove('data/IPC_additional.csv')
+  os.remove('data/Patient_record.csv')
 
   sheetsAndId = {
       "16xXmqe21mk70GJKmCwQklndkD_gQEAOA-J8dcERfLr0":[
@@ -109,7 +215,10 @@ def main():
       if not shId in data2write:
         data2write[shId] = {}
       range = sheet + "!A1"
-      data2write[shId][range] = data[sheet]
+      filePath = f"data/{sheet}.csv"
+      data = pd.read_csv(filePath)
+      data = data.to_dict(orient='records')
+      data2write[shId][range] = data
 
   # loop through data2write and write data to destination sheets
   for shId in data2write:

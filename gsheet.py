@@ -42,7 +42,11 @@ class GoogleSheets:
     def __init__(self, service_account_info: dict, spreadsheet_id: str):
         self.spreadsheet_id = spreadsheet_id
         self.credentials = self.get_credentials(service_account_info)
-        self.service = build('sheets', 'v4', credentials=self.credentials)
+        try:
+          self.service = build('sheets', 'v4', credentials=self.credentials)
+        except:
+          DISCOVERY_SERVICE_URL = 'https://sheets.googleapis.com/$discovery/rest?version=v4'
+          self.service = build('sheets', 'v4', credentials=self.credentials,discoveryServiceUrl=DISCOVERY_SERVICE_URL)
 
     def get_credentials(self, service_account_info: dict):
         scopes = ['https://www.googleapis.com/auth/spreadsheets']

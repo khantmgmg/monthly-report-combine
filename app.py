@@ -1,15 +1,21 @@
 from flask import Flask
 import script
-from apscheduler.schedulers.background import BackgroundScheduler
+import time
+import threading
 
 app = Flask(__name__)
-scheduler = BackgroundScheduler(daemon=True)
-scheduler.add_job(func=script.main, trigger='interval', minutes=10)
-scheduler.start()
 
 @app.route('/')
 def hello():
     return 'Hello, World!'
 
+def run_script():
+    while True:
+        script.main()
+        time.sleep(1800)  # sleep for 10 minutes
+
 if __name__ == '__main__':
-    app.run()
+    bg_thread = threading.Thread(target=run_script, daemon=True)
+    bg_thread.start()
+
+    app.run(host='0.0.0.0', port=8080)
