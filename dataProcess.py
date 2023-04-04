@@ -202,7 +202,7 @@ class dataProcess:
                                   `Type of Provider` == 'GP')")
     rpPerform = pd.json_normalize(rpPerform.to_dict("records"))
     # print(rpPerform.dtypes)
-    rpPerform['Year in Carbonless'] = rpPerform['Year in Carbonless'].str.replace(',','')
+    rpPerform['Year in Carbonless'] = rpPerform['Year in Carbonless'].astype(str).replace(',','').astype(int)
     rpPerform['Reporting Year'] = rpPerform['Reporting Year'].replace({',',''})
     rpPerform = rpPerform.groupby(['Reported By', 'Month in Carbonless','Year in Carbonless', 'Reporting Month', 'Reporting Year']).agg({'Name':'count'})
     rpPerform = rpPerform.reset_index()
